@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Letterboxd Better Search (prototype)",
+  "version": "0.1",
+  "description": "Prototype Chrome extension to experiment with improved search suggestions on Letterboxd.",
+  "host_permissions": [
+    "https://letterboxd.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://letterboxd.com/*"],
+      "js": ["content.js"],
+      "css": ["overlay.css"]
+    }
+  ]
+}
