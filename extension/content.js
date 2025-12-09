@@ -1,11 +1,23 @@
-// content.js - Phase 3: search bar + custom suggestion overlay
+// content.js - Phase 4: TMDb-backed suggestions overlay
 
 console.log('[letterboxd-better-search] Content script loaded on:', window.location.href);
+
+// === TMDb configuration ===
+// === TMDb configuration ===
+// TMDB_API_KEY viene fornita da config.js (che NON è committato).
+// Se non è definita, usiamo un placeholder e ci affidiamo ai dummy suggestions.
+const TMDB_API_KEY =
+  (typeof window !== 'undefined' && window.LBS_TMDB_API_KEY) || 'YOUR_TMDB_API_KEY_HERE';
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Riferimenti globali (per questa pagina)
 let lbsSearchInput = null;
 let lbsOverlay = null;
 let lbsOverlayList = null;
+
+// Per gestire il debounce delle richieste TMDb
+let tmdbTimeoutId = null;
+let lastRequestedQuery = '';
 
 /**
  * Trova il campo di ricerca principale di Letterboxd.
@@ -32,7 +44,6 @@ function findSearchInput() {
 
 /**
  * Crea il div dell’overlay e lo aggiunge al DOM.
- * Rimane nascosto fino a quando abbiamo suggerimenti da mostrare.
  */
 function createOverlay() {
   if (lbsOverlay) return;
@@ -40,13 +51,11 @@ function createOverlay() {
   const overlay = document.createElement('div');
   overlay.className = 'lbs-suggestion-overlay';
 
-  // Header opzionale (per branding/debug)
   const header = document.createElement('div');
   header.className = 'lbs-suggestion-header';
-  header.textContent = 'Letterboxd Better Search (dummy suggestions)';
+  header.textContent = 'Letterboxd Better Search (TMDb demo)';
   overlay.appendChild(header);
 
-  // Lista dei suggerimenti
   const list = document.createElement('ul');
   overlay.appendChild(list);
 
@@ -59,24 +68,22 @@ function createOverlay() {
 }
 
 /**
- * Posiziona l’overlay sotto la search bar, allineato in larghezza.
+ * Posiziona l’overlay sotto la search bar.
  */
 function positionOverlay() {
   if (!lbsSearchInput || !lbsOverlay) return;
 
-  const rect = lbsSearchInput.getBoundingClientRect(); 
-  // restituisce le coordinate dell’input nel viewport (cioè nella finestra visibile).
-  // siccome la pagina può essere scrollata :
+  const rect = lbsSearchInput.getBoundingClientRect();
   const scrollX = window.scrollX || window.pageXOffset;
   const scrollY = window.scrollY || window.pageYOffset;
-  
+
   lbsOverlay.style.left = `${rect.left + scrollX}px`;
-  lbsOverlay.style.top = `${rect.bottom + scrollY + 2}px`; // 2px di margine
+  lbsOverlay.style.top = `${rect.bottom + scrollY + 2}px`;
   lbsOverlay.style.width = `${rect.width}px`;
 }
 
 /**
- * Mostra l’overlay.
+ * Mostra/nasconde l’overlay.
  */
 function showOverlay() {
   if (!lbsOverlay) return;
@@ -84,9 +91,6 @@ function showOverlay() {
   lbsOverlay.style.display = 'block';
 }
 
-/**
- * Nasconde l’overlay.
- */
 function hideOverlay() {
   if (!lbsOverlay) return;
   lbsOverlay.style.display = 'none';
@@ -98,13 +102,11 @@ function hideOverlay() {
 function renderSuggestions(suggestions) {
   if (!lbsOverlay || !lbsOverlayList) return;
 
-  // Se non ci sono suggerimenti, nascondiamo l’overlay
   if (!suggestions || suggestions.length === 0) {
     hideOverlay();
     return;
   }
 
-  // Svuota la lista
   lbsOverlayList.innerHTML = '';
 
   suggestions.forEach((text) => {
@@ -112,12 +114,10 @@ function renderSuggestions(suggestions) {
     li.textContent = text;
 
     li.addEventListener('mousedown', (event) => {
-      // mousedown invece di click per evitare che il blur sulla input nasconda l’overlay troppo presto
       event.preventDefault();
       if (lbsSearchInput) {
         lbsSearchInput.value = text;
         console.log('[letterboxd-better-search] Suggestion clicked:', text);
-        // manteniamo comunque il comportamento nativo: l’utente può ancora premere Enter ecc.
         lbsSearchInput.focus();
       }
       hideOverlay();
@@ -130,8 +130,7 @@ function renderSuggestions(suggestions) {
 }
 
 /**
- * Genera suggerimenti "dummy" a partire dal testo digitato.
- * Per ora è solo una demo. Più avanti useremo TMDb + fuzzy search.
+ * Suggerimenti dummy di fallback (usati se TMDb fallisce).
  */
 function getDummySuggestions(query) {
   if (!query || query.trim() === '') return [];
@@ -150,11 +149,75 @@ function getDummySuggestions(query) {
   ];
 
   const q = query.toLowerCase();
-  // Filtrino banalissimo: titoli che contengono la substring
   const filtered = base.filter((title) => title.toLowerCase().includes(q));
 
-  // Se il filtro è vuoto, proponiamo comunque i primi 5, giusto per avere sempre qualcosa
   return (filtered.length > 0 ? filtered : base).slice(0, 5);
+}
+
+/**
+ * Chiama TMDb /search/movie per ottenere suggerimenti reali.
+ * Restituisce un array di stringhe tipo "Titolo (Anno)".
+ */
+async function fetchTmdbSuggestions(query) {
+  if (!query || query.trim() === '') return [];
+
+  if (!TMDB_API_KEY || TMDB_API_KEY === 'YOUR_TMDB_API_KEY_HERE') {
+    console.warn('[letterboxd-better-search] TMDb API key not set. Using dummy suggestions.');
+    return getDummySuggestions(query);
+  }
+
+  const url = `${TMDB_BASE_URL}/search/movie?api_key=${encodeURIComponent(
+    TMDB_API_KEY
+  )}&query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
+
+  console.log('[letterboxd-better-search] Fetching TMDb suggestions for:', query);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`TMDb HTTP error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const results = Array.isArray(data.results) ? data.results : [];
+
+  const suggestions = results.slice(0, 5).map((movie) => {
+    const title = movie.title || movie.name || 'Untitled';
+    const year = movie.release_date ? movie.release_date.slice(0, 4) : '';
+    return year ? `${title} (${year})` : title;
+  });
+
+  return suggestions;
+}
+
+/**
+ * Debounce: aspetta un attimo dopo che l’utente smette di scrivere
+ * prima di chiamare TMDb, per evitare una richiesta a tasto.
+ */
+function scheduleTmdbFetch(query) {
+  lastRequestedQuery = query;
+
+  if (tmdbTimeoutId) {
+    clearTimeout(tmdbTimeoutId);
+  }
+
+  tmdbTimeoutId = setTimeout(async () => {
+    try {
+      const currentQuery = lastRequestedQuery;
+      const suggestions = await fetchTmdbSuggestions(currentQuery);
+
+      // Se nel frattempo il testo nella search bar è cambiato, ignoriamo questi risultati
+      if (!lbsSearchInput || lbsSearchInput.value.trim() !== currentQuery.trim()) {
+        console.log('[letterboxd-better-search] Ignoring outdated TMDb result for:', currentQuery);
+        return;
+      }
+
+      renderSuggestions(suggestions);
+    } catch (err) {
+      console.error('[letterboxd-better-search] TMDb error, falling back to dummy suggestions:', err);
+      const fallback = getDummySuggestions(lastRequestedQuery);
+      renderSuggestions(fallback);
+    }
+  }, 300); // 300ms = abbastanza reattivo ma non troppo aggressivo
 }
 
 /**
@@ -164,7 +227,6 @@ function attachSearchListener() {
   const input = findSearchInput();
   if (!input) return;
 
-  // Evitiamo duplicazioni
   if (input._lbsListenerAttached) {
     console.log('[letterboxd-better-search] Listener already attached to search input.');
     return;
@@ -172,29 +234,34 @@ function attachSearchListener() {
   input._lbsListenerAttached = true;
   lbsSearchInput = input;
 
-  // Crea l’overlay una volta sola
   createOverlay();
   positionOverlay();
 
-  // Listener sull’input: aggiorna suggerimenti a ogni digitazione
+  // Listener sull’input: aggiorna i suggerimenti TMDb (con debounce)
   input.addEventListener('input', (event) => {
     const value = event.target.value;
     console.log('[letterboxd-better-search] User typed in search bar:', value);
 
-    const suggestions = getDummySuggestions(value);
-    renderSuggestions(suggestions);
+    if (!value || value.trim() === '') {
+      renderSuggestions([]);
+      return;
+    }
+
+    // Mostriamo subito un messaggio di "loading"
+    renderSuggestions([`Searching TMDb for "${value}"...`]);
+    scheduleTmdbFetch(value);
   });
 
-  // Quando la input riceve focus, se c’è testo mostriamo i suggerimenti
+  // Focus: se c’è già testo, ricarichiamo i suggerimenti per quella query
   input.addEventListener('focus', () => {
-    if (input.value) {
-      const suggestions = getDummySuggestions(input.value);
-      renderSuggestions(suggestions);
+    const value = input.value;
+    if (value && value.trim() !== '') {
+      renderSuggestions([`Searching TMDb for "${value}"...`]);
+      scheduleTmdbFetch(value);
     }
   });
 
-  // Quando perde il focus, nascondiamo l’overlay dopo un piccolo delay
-  // per permettere i click sui suggerimenti
+  // Blur: nascondiamo l’overlay dopo un piccolo delay per permettere click sui suggerimenti
   input.addEventListener('blur', () => {
     setTimeout(() => {
       hideOverlay();
@@ -208,11 +275,15 @@ function attachSearchListener() {
   console.log('[letterboxd-better-search] Search input listener and overlay attached.');
 }
 
+/**
+ * Hook di debug: permette di riattaccare i listener dall’esterno
+ * dispatchando l’evento "lbs-reload" sulla window.
+ */
+window.addEventListener('lbs-reload', attachSearchListener);
+
 // Esegui appena il DOM è pronto
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', attachSearchListener);
 } else {
   attachSearchListener();
 }
-
-window.addEventListener("lbs-reload", attachSearchListener);
