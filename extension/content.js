@@ -168,7 +168,7 @@ function computePopularityNorm(popularity, popStats) {
   }
   return (pop - min) / (max - min);
 }
-
+// prova
 /**
  * Calcola il punteggio finale per un film dato la query e le statistiche di popolarità.
  */
