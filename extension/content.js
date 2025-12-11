@@ -1,8 +1,7 @@
-// content.js - Phase 4: TMDb-backed suggestions overlay
+// content.js - Phase 5: TMDb-backed suggestions overlay + fuzzy/semantic ranking
 
 console.log('[letterboxd-better-search] Content script loaded on:', window.location.href);
 
-// === TMDb configuration ===
 // === TMDb configuration ===
 // TMDB_API_KEY viene fornita da config.js (che NON è committato).
 // Se non è definita, usiamo un placeholder e ci affidiamo ai dummy suggestions.
@@ -18,6 +17,197 @@ let lbsOverlayList = null;
 // Per gestire il debounce delle richieste TMDb
 let tmdbTimeoutId = null;
 let lastRequestedQuery = '';
+
+/* ========================================================================== */
+/* PHASE 5: FUZZY + SEMANTIC RANKING HELPERS                                   */
+/* ========================================================================== */
+
+/**
+ * Estrae informazioni utili dalla query:
+ * - raw: stringa originale
+ * - cleanText: testo "pulito" senza l'eventuale anno
+ * - year: anno (se presente nella query, tipo 1999, 2010, ecc.)
+ * - tokens: parole significative (lunghezza >= 2)
+ */
+function extractQueryInfo(rawQuery) {
+  const info = {
+    raw: rawQuery || '',
+    cleanText: '',
+    year: null,
+    tokens: []
+  };
+
+  if (!rawQuery || typeof rawQuery !== 'string') {
+    return info;
+  }
+
+  let text = rawQuery.toLowerCase().trim();
+
+  // Cerca un anno plausibile (1900–2099)
+  const yearMatch = text.match(/\b(19\d{2}|20\d{2})\b/);
+  if (yearMatch) {
+    info.year = parseInt(yearMatch[1], 10);
+    // Rimuove l'anno dal testo
+    text = text.replace(yearMatch[0], '').trim();
+  }
+
+  const tokens = text.split(/\s+/).filter((t) => t.length >= 2);
+  info.tokens = tokens;
+  info.cleanText = tokens.join(' ').trim();
+
+  return info;
+}
+
+/**
+ * Distanza di Levenshtein classica, O(m*n).
+ */
+function levenshteinDistance(a, b) {
+  if (a === b) return 0;
+  if (!a) return b.length;
+  if (!b) return a.length;
+
+  const aLen = a.length;
+  const bLen = b.length;
+
+  const dp = new Array(bLen + 1);
+  for (let j = 0; j <= bLen; j++) {
+    dp[j] = j;
+  }
+
+  for (let i = 1; i <= aLen; i++) {
+    let prev = i;
+    for (let j = 1; j <= bLen; j++) {
+      const temp = dp[j];
+      if (a[i - 1] === b[j - 1]) {
+        dp[j] = prev;
+      } else {
+        dp[j] = Math.min(prev + 1, dp[j] + 1, dp[j - 1] + 1);
+      }
+      prev = temp;
+    }
+    dp[0] = i;
+  }
+
+  return dp[bLen];
+}
+
+/**
+ * Similarità fuzzy normalizzata in [0, 1] a partire dalla distanza di Levenshtein.
+ */
+function fuzzySimilarity(a, b) {
+  if (!a || !b) return 0;
+  const aNorm = a.toLowerCase().trim();
+  const bNorm = b.toLowerCase().trim();
+  if (!aNorm || !bNorm) return 0;
+
+  const maxLen = Math.max(aNorm.length, bNorm.length);
+  if (maxLen === 0) return 0;
+
+  const dist = levenshteinDistance(aNorm, bNorm);
+  const similarity = 1 - dist / maxLen;
+  return Math.max(0, Math.min(1, similarity));
+}
+
+/**
+ * Score basato sull'overview: quante parole della query compaiono nella trama.
+ * Risultato in [0, 1].
+ */
+function computeOverviewScore(movie, queryInfo) {
+  const overview = (movie.overview || '').toLowerCase();
+  if (!overview || !queryInfo.tokens || queryInfo.tokens.length === 0) {
+    return 0;
+  }
+
+  let matched = 0;
+  for (const token of queryInfo.tokens) {
+    if (overview.includes(token)) {
+      matched++;
+    }
+  }
+
+  if (queryInfo.tokens.length === 0) return 0;
+  return matched / queryInfo.tokens.length;
+}
+
+/**
+ * Score di anno:
+ * - Se l'utente specifica l'anno, premiamo match esatti e vicini.
+ * - Se non lo specifica, usiamo un leggero bias verso i film più recenti.
+ */
+function computeYearScore(movie, queryInfo) {
+  const releaseDate = movie.release_date || movie.first_air_date || '';
+  const releaseYear = releaseDate ? parseInt(releaseDate.slice(0, 4), 10) : null;
+  if (!releaseYear || Number.isNaN(releaseYear)) {
+    return 0;
+  }
+
+  const currentYear = new Date().getFullYear();
+
+  if (queryInfo.year) {
+    const diff = Math.abs(releaseYear - queryInfo.year);
+    if (diff === 0) return 1;
+    // Decade di tolleranza: a 10 anni di distanza lo score va verso 0
+    const score = 1 - diff / 10;
+    return Math.max(0, Math.min(1, score));
+  } else {
+    // Leggero bias di recency: film recenti ~1, molto vecchi ~0
+    const age = currentYear - releaseYear;
+    const score = 1 - age / 50; // 50 anni -> 0
+    return Math.max(0, Math.min(1, score));
+  }
+}
+
+/**
+ * Normalizza popolarità nel range [0, 1] rispetto al min/max dei risultati correnti.
+ */
+function computePopularityNorm(popularity, popStats) {
+  const pop = typeof popularity === 'number' ? popularity : 0;
+  const { min, max } = popStats;
+  if (max <= min) {
+    return 0.5; // tutti uguali: valore medio
+  }
+  return (pop - min) / (max - min);
+}
+
+/**
+ * Calcola il punteggio finale per un film dato la query e le statistiche di popolarità.
+ */
+function computeMovieScore(movie, queryInfo, popStats) {
+  const title =
+    (movie.title || movie.name || movie.original_title || movie.original_name || '').toLowerCase();
+  const origTitle = (movie.original_title || movie.original_name || '').toLowerCase();
+
+  const queryText =
+    queryInfo.cleanText ||
+    queryInfo.raw.toLowerCase().trim(); // fallback alla query raw se cleanText è vuoto
+
+  let titleScore = 0;
+
+  if (queryText) {
+    const simTitle = fuzzySimilarity(queryText, title);
+    const simOrig = fuzzySimilarity(queryText, origTitle || title);
+    titleScore = Math.max(simTitle, simOrig);
+
+    // Bonus se la query è substring del titolo (match "quasi-esatto")
+    if (title && queryText && title.includes(queryText)) {
+      titleScore = Math.min(1, titleScore + 0.1);
+    }
+  }
+
+  const overviewScore = computeOverviewScore(movie, queryInfo);
+  const yearScore = computeYearScore(movie, queryInfo);
+  const popNorm = computePopularityNorm(movie.popularity, popStats);
+
+  // Pesi: titolo dominante, poi overview/popolarità, poi anno
+  const finalScore =
+    0.6 * titleScore + 0.15 * overviewScore + 0.15 * popNorm + 0.1 * yearScore;
+
+  return finalScore;
+}
+
+/* ========================================================================== */
+/* OVERLAY & TMDb FETCHING                                                    */
+/* ========================================================================== */
 
 /**
  * Trova il campo di ricerca principale di Letterboxd.
@@ -156,7 +346,11 @@ function getDummySuggestions(query) {
 
 /**
  * Chiama TMDb /search/movie per ottenere suggerimenti reali.
- * Restituisce un array di stringhe tipo "Titolo (Anno)".
+ * Ora:
+ *  - prende i risultati grezzi,
+ *  - calcola uno score fuzzy/semantico,
+ *  - ordina per score,
+ *  - restituisce un array di stringhe tipo "Titolo (Anno)".
  */
 async function fetchTmdbSuggestions(query) {
   if (!query || query.trim() === '') return [];
@@ -180,7 +374,31 @@ async function fetchTmdbSuggestions(query) {
   const data = await response.json();
   const results = Array.isArray(data.results) ? data.results : [];
 
-  const suggestions = results.slice(0, 5).map((movie) => {
+  if (results.length === 0) {
+    return [];
+  }
+
+  const queryInfo = extractQueryInfo(query);
+
+  // Statistiche di popolarità per normalizzare in [0, 1]
+  const popularityValues = results.map((m) =>
+    typeof m.popularity === 'number' ? m.popularity : 0
+  );
+  const popStats = {
+    min: Math.min(...popularityValues),
+    max: Math.max(...popularityValues)
+  };
+
+  const scored = results.map((movie) => {
+    const score = computeMovieScore(movie, queryInfo, popStats);
+    return { movie, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  const top = scored.slice(0, 5);
+
+  const suggestions = top.map(({ movie }) => {
     const title = movie.title || movie.name || 'Untitled';
     const year = movie.release_date ? movie.release_date.slice(0, 4) : '';
     return year ? `${title} (${year})` : title;
@@ -213,7 +431,10 @@ function scheduleTmdbFetch(query) {
 
       renderSuggestions(suggestions);
     } catch (err) {
-      console.error('[letterboxd-better-search] TMDb error, falling back to dummy suggestions:', err);
+      console.error(
+        '[letterboxd-better-search] TMDb error, falling back to dummy suggestions:',
+        err
+      );
       const fallback = getDummySuggestions(lastRequestedQuery);
       renderSuggestions(fallback);
     }
