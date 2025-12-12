@@ -5,9 +5,16 @@ console.log('[letterboxd-better-search] Content script loaded on:', window.locat
 // === TMDb configuration ===
 // TMDB_API_KEY viene fornita da config.js (che NON è committato).
 // Se non è definita, usiamo un placeholder e ci affidiamo ai dummy suggestions.
+// TMDb config...
 const TMDB_API_KEY =
   (typeof window !== 'undefined' && window.LBS_TMDB_API_KEY) || 'YOUR_TMDB_API_KEY_HERE';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+
+// === Supabase configuration ===
+const SUPABASE_URL =
+  (typeof window !== 'undefined' && window.LBS_SUPABASE_URL) || null;
+const SUPABASE_ANON_KEY =
+  (typeof window !== 'undefined' && window.LBS_SUPABASE_ANON_KEY) || null;
 
 // Riferimenti globali (per questa pagina)
 let lbsSearchInput = null;
@@ -29,6 +36,70 @@ let lastRequestedQuery = '';
  * - year: anno (se presente nella query, tipo 1999, 2010, ecc.)
  * - tokens: parole significative (lunghezza >= 2)
  */
+
+async function searchMoviesSupabase(query, limit = 10) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('[letterboxd-better-search] Supabase config missing');
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_movies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        q: query,
+        limit_count: limit,
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('[letterboxd-better-search] Supabase RPC error', response.status, text);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log('[letterboxd-better-search] Supabase results for', query, data);
+    return data;
+  } catch (err) {
+    console.error('[letterboxd-better-search] fetch error:', err);
+    return [];
+  }
+}
+
+
+
+
+async function fetchSupabaseSuggestions(query, limit = 10) {
+  if (!query || !query.trim()) {
+    return [];
+  }
+
+  console.log(
+    '[letterboxd-better-search] Fetching Supabase suggestions for:',
+    query
+  );
+
+  const movies = await searchMoviesSupabase(query, limit);
+
+  // movies viene da search_movies: { id, title, release_year, ... }
+  // Lo convertiamo in stringhe tipo "Titolo (Anno)" come facevi con TMDb
+  const suggestions = movies.map((movie) => {
+    const title = movie.title || 'Untitled';
+    const year = movie.release_year;
+    return year ? `${title} (${year})` : title;
+  });
+
+  return suggestions;
+}
+
+
+
 function extractQueryInfo(rawQuery) {
   const info = {
     raw: rawQuery || '',
@@ -243,7 +314,7 @@ function createOverlay() {
 
   const header = document.createElement('div');
   header.className = 'lbs-suggestion-header';
-  header.textContent = 'Letterboxd Better Search (TMDb demo)';
+  header.textContent = 'Letterboxd Better Search (Supabase demo)';
   overlay.appendChild(header);
 
   const list = document.createElement('ul');
@@ -419,20 +490,27 @@ function scheduleTmdbFetch(query) {
   }
 
   tmdbTimeoutId = setTimeout(async () => {
-    try {
-      const currentQuery = lastRequestedQuery;
-      const suggestions = await fetchTmdbSuggestions(currentQuery);
+    const currentQuery = lastRequestedQuery;
 
-      // Se nel frattempo il testo nella search bar è cambiato, ignoriamo questi risultati
-      if (!lbsSearchInput || lbsSearchInput.value.trim() !== currentQuery.trim()) {
-        console.log('[letterboxd-better-search] Ignoring outdated TMDb result for:', currentQuery);
+    try {
+      const suggestions = await fetchSupabaseSuggestions(currentQuery);
+
+      // Se nel frattempo il testo è cambiato, ignora questi risultati
+      if (
+        !lbsSearchInput ||
+        lbsSearchInput.value.trim() !== currentQuery.trim()
+      ) {
+        console.log(
+          '[letterboxd-better-search] Ignoring outdated result for:',
+          currentQuery
+        );
         return;
       }
 
       renderSuggestions(suggestions);
     } catch (err) {
       console.error(
-        '[letterboxd-better-search] TMDb error, falling back to dummy suggestions:',
+        '[letterboxd-better-search] Supabase error, falling back to dummy suggestions:',
         err
       );
       const fallback = getDummySuggestions(lastRequestedQuery);
@@ -440,6 +518,7 @@ function scheduleTmdbFetch(query) {
     }
   }, 300); // 300ms = abbastanza reattivo ma non troppo aggressivo
 }
+
 
 /**
  * Attacca listener alla search bar + setup overlay.
@@ -469,7 +548,7 @@ function attachSearchListener() {
     }
 
     // Mostriamo subito un messaggio di "loading"
-    renderSuggestions([`Searching TMDb for "${value}"...`]);
+    renderSuggestions([`Searching Supabase for "${value}"...`]);
     scheduleTmdbFetch(value);
   });
 
@@ -477,7 +556,7 @@ function attachSearchListener() {
   input.addEventListener('focus', () => {
     const value = input.value;
     if (value && value.trim() !== '') {
-      renderSuggestions([`Searching TMDb for "${value}"...`]);
+      renderSuggestions([`Searching Supabase for "${value}"...`]);
       scheduleTmdbFetch(value);
     }
   });
@@ -493,8 +572,14 @@ function attachSearchListener() {
   window.addEventListener('resize', positionOverlay);
   window.addEventListener('scroll', positionOverlay);
 
+  // ... gli addEventListener che già hai ...
+
   console.log('[letterboxd-better-search] Search input listener and overlay attached.');
+
+
+  
 }
+
 
 /**
  * Hook di debug: permette di riattaccare i listener dall’esterno
