@@ -35,6 +35,12 @@ def fetch_tmdb_popular(page: int = 1) -> dict:
   resp.raise_for_status()
   return resp.json()
 
+def get_italian_title(raw):
+    translations = raw.get("translations", {}).get("translations", [])
+    for t in translations:
+        if t.get("iso_639_1") == "it":
+            return t.get("data", {}).get("title")
+    return None
 
 
 def normalize_movie(raw: dict) -> dict:
@@ -50,6 +56,8 @@ def normalize_movie(raw: dict) -> dict:
       release_year = datetime.strptime(release_date, "%Y-%m-%d").year
     except Exception:
       release_year = None
+  
+  title_it = get_italian_title(raw_movie)
 
   return {
     "id": raw["id"],
@@ -64,6 +72,7 @@ def normalize_movie(raw: dict) -> dict:
     "original_language": raw.get("original_language"),
     "genre_ids": raw.get("genre_ids") or [],
     "poster_path": raw.get("poster_path"),
+    "title_it": title_it,
   }
 
 
@@ -105,20 +114,47 @@ def fetch_popular_people_page(page: int):
   data = resp.json()
   return data.get("results", [])
 
+def fetch_person_credits(person_id: int) -> int:
+    """
+    Ritorna il numero totale di credits (cast + crew) di una persona TMDb.
+    Usa /person/{id}/combined_credits.
+    """
+    url = f"https://api.themoviedb.org/3/person/{person_id}/combined_credits"
+    params = {
+        "api_key": TMDB_API_KEY,
+        "language": "en-US",
+    }
+    resp = SESSION.get(url, params=params, timeout=30)
+    if not resp.ok:
+        print(f"TMDb combined_credits error for person {person_id}:",
+              resp.status_code, resp.text, file=sys.stderr)
+        return 0
+
+    data = resp.json()
+    cast = data.get("cast") or []
+    crew = data.get("crew") or []
+    return len(cast) + len(crew)
+
 
 def normalize_person(raw: dict) -> dict:
-  """Prende un record TMDb person e lo mappa al nostro schema Supabase."""
-  return {
-    "id": raw["id"],
-    "name": raw.get("name") or "",
-    "original_name": raw.get("original_name"),
-    "known_for_department": raw.get("known_for_department"),
-    "profile_path": raw.get("profile_path"),
-    "popularity": raw.get("popularity"),
-    "gender": raw.get("gender"),
-    "adult": raw.get("adult"),
-    "also_known_as": raw.get("also_known_as") or [],
-  }
+    """Prende un record TMDb person e lo mappa al nostro schema Supabase."""
+    person_id = raw["id"]
+
+    credits_count = fetch_person_credits(person_id)
+
+    return {
+        "id": person_id,
+        "name": raw.get("name") or "",
+        "original_name": raw.get("original_name"),
+        "known_for_department": raw.get("known_for_department"),
+        "profile_path": raw.get("profile_path"),
+        "popularity": raw.get("popularity"),
+        "gender": raw.get("gender"),
+        "adult": raw.get("adult"),
+        "also_known_as": raw.get("also_known_as") or [],
+        "credits_count": credits_count,
+    }
+
 
 
 def upsert_people(people: list[dict]):
@@ -141,6 +177,7 @@ def upsert_people(people: list[dict]):
   if not resp.ok:
     print("Supabase upsert people error:", resp.status_code, resp.text, file=sys.stderr)
     resp.raise_for_status()
+
 
 
 def main():
