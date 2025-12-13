@@ -35,6 +35,24 @@ def fetch_tmdb_popular(page: int = 1) -> dict:
   resp.raise_for_status()
   return resp.json()
 
+def fetch_tmdb_discover(page: int = 1) -> dict:
+    """
+    Scarica una pagina di film da /discover/movie ordinati per vote_count.desc.
+    """
+    url = "https://api.themoviedb.org/3/discover/movie"
+    params = {
+        "api_key": TMDB_API_KEY,
+        "page": page,
+        "language": "en-US",
+        "sort_by": "vote_count.desc",
+        "include_adult": "false",
+        "include_video": "false",
+    }
+    resp = requests.get(url, params=params, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+
 def get_italian_title(raw):
     translations = raw.get("translations", {}).get("translations", [])
     for t in translations:
@@ -204,6 +222,30 @@ def main():
     # piccolo sleep per non stressare TMDb
     time.sleep(0.5)
   
+    # --- DISCOVER (vote_count.desc) ---
+  discover_pages = int(os.environ.get("TMDB_DISCOVER_PAGES", "0"))
+
+  if discover_pages > 0:
+    print(f"Starting TMDb → Supabase ingest for {discover_pages} pages of 'discover (vote_count.desc)'...")
+    for page in range(1, discover_pages + 1):
+      try:
+        data = fetch_tmdb_discover(page)
+      except Exception as e:
+        print(f"Error fetching TMDb discover page {page}: {e}", file=sys.stderr)
+        break
+
+      results = data.get("results") or []
+      movies = [normalize_movie(m) for m in results]
+
+      try:
+        upsert_movies(movies)
+      except Exception as e:
+        print(f"Error upserting discover page {page}: {e}", file=sys.stderr)
+        break
+
+      print(f"Upserted discover page {page}/{discover_pages} ({len(movies)} movies).")
+      time.sleep(0.5)
+
   # --- Ingest persone popolari TMDb ---
   people_pages = int(os.environ.get("TMDB_PEOPLE_PAGES", "50"))
 
