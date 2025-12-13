@@ -57,7 +57,7 @@ def normalize_movie(raw: dict) -> dict:
     except Exception:
       release_year = None
   
-  title_it = get_italian_title(raw_movie)
+  title_it = get_italian_title(raw)
 
   return {
     "id": raw["id"],
