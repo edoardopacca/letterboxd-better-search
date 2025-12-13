@@ -10,7 +10,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   font-size: 13px;
   line-height: 1.4;
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
   display: none; /* nascosto di default */
 }
@@ -22,12 +22,17 @@
 }
 
 .lbs-suggestion-overlay li {
-  padding: 6px 10px;
+  padding: 4px 8px;        /* meno spazio verticale */
   cursor: pointer;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.2;        /* titoli più compatti */
+
+  white-space: normal;     /* permette 2+ righe */
+  overflow: visible;
+  word-break: break-word;
 }
+
+
 
 .lbs-suggestion-overlay li:hover,
 .lbs-suggestion-overlay li.lbs-selected {

@@ -37,14 +37,14 @@ let lastRequestedQuery = '';
  * - tokens: parole significative (lunghezza >= 2)
  */
 
-async function searchMoviesSupabase(query, limit = 10) {
+async function searchAllSupabase(query, limit = 10) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error('[letterboxd-better-search] Supabase config missing');
     return [];
   }
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_movies`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_all`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ async function searchMoviesSupabase(query, limit = 10) {
     }
 
     const data = await response.json();
-    console.log('[letterboxd-better-search] Supabase results for', query, data);
+    console.log('[letterboxd-better-search] Supabase search_all results for', query, data);
     return data;
   } catch (err) {
     console.error('[letterboxd-better-search] fetch error:', err);
@@ -72,6 +72,30 @@ async function searchMoviesSupabase(query, limit = 10) {
   }
 }
 
+
+function buildLetterboxdSearchUrl(query) {
+  const origin = window.location.origin || 'https://letterboxd.com';
+  const trimmed = (query || '').trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  // encodeURIComponent gestisce i caratteri strani;
+  // poi sostituiamo gli spazi con '+' e teniamo le parentesi "belle"
+  const encoded = encodeURIComponent(trimmed)
+    .replace(/%20/g, '+')
+    .replace(/%28/g, '(')
+    .replace(/%29/g, ')');
+
+  return `${origin}/search/${encoded}/`;
+}
+
+function goToLetterboxdSearch(query) {
+  const url = buildLetterboxdSearchUrl(query);
+  if (!url) return;
+  window.location.href = url;
+}
 
 
 
@@ -81,22 +105,46 @@ async function fetchSupabaseSuggestions(query, limit = 10) {
   }
 
   console.log(
-    '[letterboxd-better-search] Fetching Supabase suggestions for:',
+    '[letterboxd-better-search] Fetching Supabase suggestions (search_all) for:',
     query
   );
 
-  const movies = await searchMoviesSupabase(query, limit);
+  const results = await searchAllSupabase(query, limit);
 
-  // movies viene da search_movies: { id, title, release_year, ... }
-  // Lo convertiamo in stringhe tipo "Titolo (Anno)" come facevi con TMDb
-  const suggestions = movies.map((movie) => {
-    const title = movie.title || 'Untitled';
-    const year = movie.release_year;
-    return year ? `${title} (${year})` : title;
+  const suggestions = results.map((row) => {
+    if (row.result_type === 'movie') {
+      const title = row.title || 'Untitled';
+      const year = row.release_year;
+
+      return {
+        type: 'movie',
+        label: year ? `${title} (${year})` : title,  // puoi togliere l'anno se vuoi
+        searchQuery: title,                           // per la ricerca Letterboxd
+      };
+    }
+
+    if (row.result_type === 'person') {
+      const name = row.name || 'Unknown person';
+
+      return {
+        type: 'person',
+        label: name,
+        searchQuery: name,                            // per ora mandiamo alla search generale
+      };
+    }
+
+    // fallback (non dovrebbe succedere)
+    return {
+      type: 'unknown',
+      label: row.title || row.name || 'Unknown',
+      searchQuery: row.title || row.name || '',
+    };
   });
 
   return suggestions;
 }
+
+
 
 
 
@@ -368,19 +416,36 @@ function renderSuggestions(suggestions) {
     return;
   }
 
+  // Svuota lista
   lbsOverlayList.innerHTML = '';
 
-  suggestions.forEach((text) => {
-    const li = document.createElement('li');
-    li.textContent = text;
+  suggestions.forEach((item) => {
+    // Supporta sia stringhe (vecchio formato) sia oggetti (nuovo formato)
+    let label;
+    let searchQuery;
 
+    if (typeof item === 'string') {
+      label = item;
+      searchQuery = item;
+    } else if (item && typeof item === 'object') {
+      label = item.label || item.searchQuery || '';
+      searchQuery = item.searchQuery || item.label || '';
+    } else {
+      return; // salta item strani
+    }
+
+    if (!label) return;
+
+    const li = document.createElement('li');
+    li.textContent = label;
+
+    // Evitiamo che il blur sull'input annulli il click
     li.addEventListener('mousedown', (event) => {
       event.preventDefault();
-      if (lbsSearchInput) {
-        lbsSearchInput.value = text;
-        console.log('[letterboxd-better-search] Suggestion clicked:', text);
-        lbsSearchInput.focus();
-      }
+
+      // Vai alla pagina di ricerca Letterboxd basata su searchQuery
+      goToLetterboxdSearch(searchQuery);
+
       hideOverlay();
     });
 
@@ -390,6 +455,7 @@ function renderSuggestions(suggestions) {
   showOverlay();
 }
 
+
 /**
  * Suggerimenti dummy di fallback (usati se TMDb fallisce).
  */
@@ -397,23 +463,25 @@ function getDummySuggestions(query) {
   if (!query || query.trim() === '') return [];
 
   const base = [
-    'The Godfather',
-    'The Godfather: Part II',
-    'The Dark Knight',
-    'Pulp Fiction',
     'Inception',
     'La La Land',
-    'Spirited Away',
-    'Parasite',
-    'Fight Club',
-    'Interstellar'
+    'The Godfather',
+    'Avatar',
+    'The Dark Knight'
   ];
 
-  const q = query.toLowerCase();
-  const filtered = base.filter((title) => title.toLowerCase().includes(q));
+  // Filtra / adatta come fai ora...
+  const filtered = base.filter((title) =>
+    title.toLowerCase().includes(query.toLowerCase())
+  );
 
-  return (filtered.length > 0 ? filtered : base).slice(0, 5);
+  // Torna oggetti con label+searchQuery uguali
+  return filtered.map((title) => ({
+    label: title,
+    searchQuery: title
+  }));
 }
+
 
 /**
  * Chiama TMDb /search/movie per ottenere suggerimenti reali.
@@ -470,10 +538,15 @@ async function fetchTmdbSuggestions(query) {
   const top = scored.slice(0, 5);
 
   const suggestions = top.map(({ movie }) => {
-    const title = movie.title || movie.name || 'Untitled';
-    const year = movie.release_date ? movie.release_date.slice(0, 4) : '';
-    return year ? `${title} (${year})` : title;
-  });
+  const rawTitle = movie.title || movie.name || 'Untitled';
+  const year = movie.release_date ? movie.release_date.slice(0, 4) : '';
+
+  const label = rawTitle;
+  const searchQuery = year ? `${rawTitle} (${year})` : rawTitle;
+
+  return { label, searchQuery };
+});
+
 
   return suggestions;
 }

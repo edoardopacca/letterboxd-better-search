@@ -36,6 +36,7 @@ def fetch_tmdb_popular(page: int = 1) -> dict:
   return resp.json()
 
 
+
 def normalize_movie(raw: dict) -> dict:
   """
   Mappa un oggetto film di TMDb ai campi della tabella public.movies.
@@ -87,6 +88,60 @@ def upsert_movies(movies: list[dict]) -> None:
     print("Supabase upsert error:", resp.status_code, resp.text, file=sys.stderr)
     resp.raise_for_status()
 
+def fetch_popular_people_page(page: int):
+  """Scarica una pagina di persone popolari da TMDb."""
+  url = f"https://api.themoviedb.org/3/person/popular"
+  params = {
+    "api_key": TMDB_API_KEY,
+    "page": page,
+    "language": "en-US",
+  }
+
+  resp = SESSION.get(url, params=params, timeout=30)
+  if not resp.ok:
+    print("TMDb /person/popular error:", resp.status_code, resp.text, file=sys.stderr)
+    resp.raise_for_status()
+
+  data = resp.json()
+  return data.get("results", [])
+
+
+def normalize_person(raw: dict) -> dict:
+  """Prende un record TMDb person e lo mappa al nostro schema Supabase."""
+  return {
+    "id": raw["id"],
+    "name": raw.get("name") or "",
+    "original_name": raw.get("original_name"),
+    "known_for_department": raw.get("known_for_department"),
+    "profile_path": raw.get("profile_path"),
+    "popularity": raw.get("popularity"),
+    "gender": raw.get("gender"),
+    "adult": raw.get("adult"),
+    "also_known_as": raw.get("also_known_as") or [],
+  }
+
+
+def upsert_people(people: list[dict]):
+  """Fa upsert in Supabase sulla tabella public.people."""
+  if not people:
+    return
+
+  url = f"{SUPABASE_URL}/rest/v1/people"
+  params = {
+    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+  }
+  headers = {
+    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "resolution=merge-duplicates",
+  }
+
+  resp = SESSION.post(url, params=params, json=people, headers=headers, timeout=60)
+  if not resp.ok:
+    print("Supabase upsert people error:", resp.status_code, resp.text, file=sys.stderr)
+    resp.raise_for_status()
+
 
 def main():
   # Quante pagine scaricare: ogni pagina ~20 film
@@ -111,6 +166,26 @@ def main():
     print(f"Upserted page {page}/{total_pages} ({len(movies)} movies).")
     # piccolo sleep per non stressare TMDb
     time.sleep(0.5)
+  
+  # --- Ingest persone popolari TMDb ---
+  people_pages = int(os.environ.get("TMDB_PEOPLE_PAGES", "50"))
+
+  print(f"Starting TMDb → Supabase ingest for {people_pages} pages of 'popular people'")
+
+  for page in range(1, people_pages + 1):
+    try:
+      results = fetch_popular_people_page(page)
+      people = [normalize_person(p) for p in results]
+      upsert_people(people)
+    except Exception as e:
+      print(f"Error upserting people page {page}: {e}", file=sys.stderr)
+      break
+
+    print(f"Upserted people page {page}/{people_pages} ({len(people)} people).")
+    time.sleep(0.5)
+
+  print("Done.")
+
 
   print("Done.")
 
