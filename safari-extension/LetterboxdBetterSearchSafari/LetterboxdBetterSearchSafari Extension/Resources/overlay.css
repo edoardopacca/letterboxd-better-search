@@ -1,0 +1,50 @@
+/* overlay.css - Phase 3: basic suggestion overlay UI */
+
+.lbs-suggestion-overlay {
+  position: absolute;
+  z-index: 9999;
+  background-color: #1f1f1f;
+  color: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  font-size: 13px;
+  line-height: 1.4;
+  max-height: 320px;
+  overflow-y: auto;
+  display: none; /* nascosto di default */
+}
+
+.lbs-suggestion-overlay ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.lbs-suggestion-overlay li {
+  padding: 4px 8px;        /* meno spazio verticale */
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.2;        /* titoli più compatti */
+
+  white-space: normal;     /* permette 2+ righe */
+  overflow: visible;
+  word-break: break-word;
+}
+
+
+
+.lbs-suggestion-overlay li:hover,
+.lbs-suggestion-overlay li.lbs-selected {
+  background-color: #2c2c2c;
+}
+
+/* piccola label in alto per debug / futuro branding */
+.lbs-suggestion-header {
+  padding: 4px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a0a0a0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}

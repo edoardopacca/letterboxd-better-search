@@ -1,5 +1,5 @@
 // content.js 
-console.log('[lbs] content.js VERSION 7 - safari debug');
+console.log('[lbs] content.js VERSION 9 - safari debug');
 
 console.log('[letterboxd-better-search] Content script loaded on:', window.location.href);
 

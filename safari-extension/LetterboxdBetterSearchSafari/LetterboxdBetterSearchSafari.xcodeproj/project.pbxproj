@@ -7,27 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D061CA132EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D061CA122EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D02395BB2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D02395BA2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		D061CA142EF0635C00EE6D59 /* PBXContainerItemProxy */ = {
+		D02395BC2EF096DE0090EA53 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = D061C9F02EF0635900EE6D59 /* Project object */;
+			containerPortal = D02395982EF096DD0090EA53 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = D061CA112EF0635C00EE6D59;
+			remoteGlobalIDString = D02395B92EF096DE0090EA53;
 			remoteInfo = "LetterboxdBetterSearchSafari Extension";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		D061CA312EF0635C00EE6D59 /* Embed Foundation Extensions */ = {
+		D02395D92EF096DE0090EA53 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				D061CA132EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension.appex in Embed Foundation Extensions */,
+				D02395BB2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -35,48 +35,55 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		D05B8F8B2EF0720600823321 /* content.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = content.js; path = ../extension/content.js; sourceTree = "<group>"; };
-		D05B8F8D2EF0720600823321 /* overlay.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = overlay.css; path = ../extension/overlay.css; sourceTree = "<group>"; };
-		D05B8F8E2EF0720600823321 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = ../extension/manifest.json; sourceTree = "<group>"; };
-		D061C9F82EF0635900EE6D59 /* LetterboxdBetterSearchSafari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LetterboxdBetterSearchSafari.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D061CA122EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "LetterboxdBetterSearchSafari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D02395A02EF096DD0090EA53 /* LetterboxdBetterSearchSafari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LetterboxdBetterSearchSafari.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D02395BA2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "LetterboxdBetterSearchSafari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		D061CA2B2EF0635C00EE6D59 /* Exceptions for "SafariExtension" folder in "LetterboxdBetterSearchSafari Extension" target */ = {
+		D02395D32EF096DE0090EA53 /* Exceptions for "LetterboxdBetterSearchSafari Extension" folder in "LetterboxdBetterSearchSafari Extension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Resources/_locales,
+				Resources/background.js,
+				Resources/images,
+				Resources/popup.css,
+				Resources/popup.html,
+				Resources/popup.js,
 			);
-			target = D061CA112EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension */;
+			target = D02395B92EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		D061C9FA2EF0635900EE6D59 /* ResourcesSafari */ = {
+		D02395A22EF096DD0090EA53 /* LetterboxdBetterSearchSafari */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ResourcesSafari;
+			path = LetterboxdBetterSearchSafari;
 			sourceTree = "<group>";
 		};
-		D061CA162EF0635C00EE6D59 /* SafariExtension */ = {
+		D02395BE2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				D061CA2B2EF0635C00EE6D59 /* Exceptions for "SafariExtension" folder in "LetterboxdBetterSearchSafari Extension" target */,
+				D02395D32EF096DE0090EA53 /* Exceptions for "LetterboxdBetterSearchSafari Extension" folder in "LetterboxdBetterSearchSafari Extension" target */,
 			);
-			path = SafariExtension;
+			explicitFolders = (
+				Resources/_locales,
+				Resources/images,
+			);
+			path = "LetterboxdBetterSearchSafari Extension";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		D061C9F52EF0635900EE6D59 /* Frameworks */ = {
+		D023959D2EF096DD0090EA53 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D061CA0F2EF0635C00EE6D59 /* Frameworks */ = {
+		D02395B72EF096DE0090EA53 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -86,32 +93,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		D05B8F8C2EF0720600823321 /* icons */ = {
+		D02395972EF096DD0090EA53 = {
 			isa = PBXGroup;
 			children = (
-			);
-			name = icons;
-			path = ../extension/icons;
-			sourceTree = "<group>";
-		};
-		D061C9EF2EF0635900EE6D59 = {
-			isa = PBXGroup;
-			children = (
-				D05B8F8B2EF0720600823321 /* content.js */,
-				D05B8F8C2EF0720600823321 /* icons */,
-				D05B8F8E2EF0720600823321 /* manifest.json */,
-				D05B8F8D2EF0720600823321 /* overlay.css */,
-				D061C9FA2EF0635900EE6D59 /* ResourcesSafari */,
-				D061CA162EF0635C00EE6D59 /* SafariExtension */,
-				D061C9F92EF0635900EE6D59 /* Products */,
+				D02395A22EF096DD0090EA53 /* LetterboxdBetterSearchSafari */,
+				D02395BE2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */,
+				D02395A12EF096DD0090EA53 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		D061C9F92EF0635900EE6D59 /* Products */ = {
+		D02395A12EF096DD0090EA53 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D061C9F82EF0635900EE6D59 /* LetterboxdBetterSearchSafari.app */,
-				D061CA122EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension.appex */,
+				D02395A02EF096DD0090EA53 /* LetterboxdBetterSearchSafari.app */,
+				D02395BA2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,99 +114,99 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D061C9F72EF0635900EE6D59 /* LetterboxdBetterSearchSafari */ = {
+		D023959F2EF096DD0090EA53 /* LetterboxdBetterSearchSafari */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D061CA322EF0635C00EE6D59 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari" */;
+			buildConfigurationList = D02395DA2EF096DE0090EA53 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari" */;
 			buildPhases = (
-				D061C9F42EF0635900EE6D59 /* Sources */,
-				D061C9F52EF0635900EE6D59 /* Frameworks */,
-				D061C9F62EF0635900EE6D59 /* Resources */,
-				D061CA312EF0635C00EE6D59 /* Embed Foundation Extensions */,
+				D023959C2EF096DD0090EA53 /* Sources */,
+				D023959D2EF096DD0090EA53 /* Frameworks */,
+				D023959E2EF096DD0090EA53 /* Resources */,
+				D02395D92EF096DE0090EA53 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				D061CA152EF0635C00EE6D59 /* PBXTargetDependency */,
+				D02395BD2EF096DE0090EA53 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				D061C9FA2EF0635900EE6D59 /* ResourcesSafari */,
+				D02395A22EF096DD0090EA53 /* LetterboxdBetterSearchSafari */,
 			);
 			name = LetterboxdBetterSearchSafari;
 			packageProductDependencies = (
 			);
 			productName = LetterboxdBetterSearchSafari;
-			productReference = D061C9F82EF0635900EE6D59 /* LetterboxdBetterSearchSafari.app */;
+			productReference = D02395A02EF096DD0090EA53 /* LetterboxdBetterSearchSafari.app */;
 			productType = "com.apple.product-type.application";
 		};
-		D061CA112EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension */ = {
+		D02395B92EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D061CA2C2EF0635C00EE6D59 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari Extension" */;
+			buildConfigurationList = D02395D42EF096DE0090EA53 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari Extension" */;
 			buildPhases = (
-				D061CA0E2EF0635C00EE6D59 /* Sources */,
-				D061CA0F2EF0635C00EE6D59 /* Frameworks */,
-				D061CA102EF0635C00EE6D59 /* Resources */,
+				D02395B62EF096DE0090EA53 /* Sources */,
+				D02395B72EF096DE0090EA53 /* Frameworks */,
+				D02395B82EF096DE0090EA53 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				D061CA162EF0635C00EE6D59 /* SafariExtension */,
+				D02395BE2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */,
 			);
 			name = "LetterboxdBetterSearchSafari Extension";
 			packageProductDependencies = (
 			);
 			productName = "LetterboxdBetterSearchSafari Extension";
-			productReference = D061CA122EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension.appex */;
+			productReference = D02395BA2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		D061C9F02EF0635900EE6D59 /* Project object */ = {
+		D02395982EF096DD0090EA53 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					D061C9F72EF0635900EE6D59 = {
+					D023959F2EF096DD0090EA53 = {
 						CreatedOnToolsVersion = 26.2;
 					};
-					D061CA112EF0635C00EE6D59 = {
+					D02395B92EF096DE0090EA53 = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
 			};
-			buildConfigurationList = D061C9F32EF0635900EE6D59 /* Build configuration list for PBXProject "LetterboxdBetterSearchSafari" */;
+			buildConfigurationList = D023959B2EF096DD0090EA53 /* Build configuration list for PBXProject "LetterboxdBetterSearchSafari" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = D061C9EF2EF0635900EE6D59;
+			mainGroup = D02395972EF096DD0090EA53;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = D061C9F92EF0635900EE6D59 /* Products */;
+			productRefGroup = D02395A12EF096DD0090EA53 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D061C9F72EF0635900EE6D59 /* LetterboxdBetterSearchSafari */,
-				D061CA112EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension */,
+				D023959F2EF096DD0090EA53 /* LetterboxdBetterSearchSafari */,
+				D02395B92EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		D061C9F62EF0635900EE6D59 /* Resources */ = {
+		D023959E2EF096DD0090EA53 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D061CA102EF0635C00EE6D59 /* Resources */ = {
+		D02395B82EF096DE0090EA53 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -221,14 +216,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		D061C9F42EF0635900EE6D59 /* Sources */ = {
+		D023959C2EF096DD0090EA53 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D061CA0E2EF0635C00EE6D59 /* Sources */ = {
+		D02395B62EF096DE0090EA53 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -238,15 +233,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		D061CA152EF0635C00EE6D59 /* PBXTargetDependency */ = {
+		D02395BD2EF096DE0090EA53 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = D061CA112EF0635C00EE6D59 /* LetterboxdBetterSearchSafari Extension */;
-			targetProxy = D061CA142EF0635C00EE6D59 /* PBXContainerItemProxy */;
+			target = D02395B92EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */;
+			targetProxy = D02395BC2EF096DE0090EA53 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		D061CA2D2EF0635C00EE6D59 /* Debug */ = {
+		D02395D52EF096DE0090EA53 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -281,7 +276,7 @@
 			};
 			name = Debug;
 		};
-		D061CA2E2EF0635C00EE6D59 /* Release */ = {
+		D02395D62EF096DE0090EA53 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -316,7 +311,7 @@
 			};
 			name = Release;
 		};
-		D061CA2F2EF0635C00EE6D59 /* Debug */ = {
+		D02395D72EF096DE0090EA53 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -380,7 +375,7 @@
 			};
 			name = Debug;
 		};
-		D061CA302EF0635C00EE6D59 /* Release */ = {
+		D02395D82EF096DE0090EA53 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -436,7 +431,7 @@
 			};
 			name = Release;
 		};
-		D061CA332EF0635C00EE6D59 /* Debug */ = {
+		D02395DB2EF096DE0090EA53 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -477,7 +472,7 @@
 			};
 			name = Debug;
 		};
-		D061CA342EF0635C00EE6D59 /* Release */ = {
+		D02395DC2EF096DE0090EA53 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -521,34 +516,34 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D061C9F32EF0635900EE6D59 /* Build configuration list for PBXProject "LetterboxdBetterSearchSafari" */ = {
+		D023959B2EF096DD0090EA53 /* Build configuration list for PBXProject "LetterboxdBetterSearchSafari" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D061CA2F2EF0635C00EE6D59 /* Debug */,
-				D061CA302EF0635C00EE6D59 /* Release */,
+				D02395D72EF096DE0090EA53 /* Debug */,
+				D02395D82EF096DE0090EA53 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D061CA2C2EF0635C00EE6D59 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari Extension" */ = {
+		D02395D42EF096DE0090EA53 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari Extension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D061CA2D2EF0635C00EE6D59 /* Debug */,
-				D061CA2E2EF0635C00EE6D59 /* Release */,
+				D02395D52EF096DE0090EA53 /* Debug */,
+				D02395D62EF096DE0090EA53 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D061CA322EF0635C00EE6D59 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari" */ = {
+		D02395DA2EF096DE0090EA53 /* Build configuration list for PBXNativeTarget "LetterboxdBetterSearchSafari" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D061CA332EF0635C00EE6D59 /* Debug */,
-				D061CA342EF0635C00EE6D59 /* Release */,
+				D02395DB2EF096DE0090EA53 /* Debug */,
+				D02395DC2EF096DE0090EA53 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = D061C9F02EF0635900EE6D59 /* Project object */;
+	rootObject = D02395982EF096DD0090EA53 /* Project object */;
 }

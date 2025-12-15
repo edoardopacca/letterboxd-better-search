@@ -138,8 +138,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-#key
-extension/config.js
 
 #.env
 backend/.env
