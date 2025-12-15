@@ -35,9 +35,10 @@ def fetch_tmdb_popular(page: int = 1) -> dict:
   resp.raise_for_status()
   return resp.json()
 
-def fetch_tmdb_discover(page: int = 1) -> dict:
+def fetch_tmdb_discover(page: int = 1, year: int | None = None) -> dict:
     """
-    Scarica una pagina di film da /discover/movie ordinati per vote_count.desc.
+    Scarica una pagina di film da /discover/movie.
+    Se year è valorizzato, filtra per quell'anno (range di date).
     """
     url = "https://api.themoviedb.org/3/discover/movie"
     params = {
@@ -48,9 +49,16 @@ def fetch_tmdb_discover(page: int = 1) -> dict:
         "include_adult": "false",
         "include_video": "false",
     }
+
+    if year is not None:
+        # Limitiamo a film con data di uscita nell'anno specificato
+        params["primary_release_date.gte"] = f"{year}-01-01"
+        params["primary_release_date.lte"] = f"{year}-12-31"
+
     resp = requests.get(url, params=params, timeout=30)
     resp.raise_for_status()
     return resp.json()
+
 
 
 def get_italian_title(raw):
@@ -114,6 +122,72 @@ def upsert_movies(movies: list[dict]) -> None:
   if not resp.ok:
     print("Supabase upsert error:", resp.status_code, resp.text, file=sys.stderr)
     resp.raise_for_status()
+
+def ingest_discover_by_year(start_year: int, end_year: int, max_pages_per_year: int):
+  """
+  Usa /discover/movie per ogni anno nel range [start_year, end_year],
+  fino a max_pages_per_year (ma mai oltre 500, limite TMDb).
+  """
+  print(
+      f"Starting TMDb → Supabase ingest for discover(movie) by year "
+      f"{start_year}-{end_year}, up to {max_pages_per_year} pages/year..."
+  )
+
+  for year in range(start_year, end_year + 1):
+    try:
+      # Prima pagina, per capire quante pagine esistono davvero
+      first_page_data = fetch_tmdb_discover(page=1, year=year)
+    except Exception as e:
+      print(f"[{year}] Error fetching TMDb discover page 1: {e}", file=sys.stderr)
+      continue  # passo all'anno successivo
+
+    total_pages_tmdb = int(first_page_data.get("total_pages", 1))
+    # Non andiamo oltre il limite TMDb (500) né oltre il nostro limite per anno
+    pages_to_fetch = min(total_pages_tmdb, max_pages_per_year, 500)
+
+    # Ingest pagina 1
+    results = first_page_data.get("results") or []
+    movies = [normalize_movie(m) for m in results]
+    try:
+      upsert_movies(movies)
+    except Exception as e:
+      print(f"[{year}] Error upserting discover page 1: {e}", file=sys.stderr)
+      continue
+
+    print(
+      f"[{year}] Upserted discover page 1/{pages_to_fetch} "
+      f"({len(movies)} movies)."
+    )
+    time.sleep(0.5)
+
+    # Ingest pagine 2..N
+    for page in range(2, pages_to_fetch + 1):
+      try:
+        data = fetch_tmdb_discover(page=page, year=year)
+      except Exception as e:
+        print(
+            f"[{year}] Error fetching TMDb discover page {page}: {e}",
+            file=sys.stderr,
+        )
+        break
+
+      results = data.get("results") or []
+      movies = [normalize_movie(m) for m in results]
+
+      try:
+        upsert_movies(movies)
+      except Exception as e:
+        print(
+          f"[{year}] Error upserting discover page {page}: {e}",
+          file=sys.stderr,
+        )
+        break
+
+      print(
+        f"[{year}] Upserted discover page {page}/{pages_to_fetch} "
+        f"({len(movies)} movies)."
+      )
+      time.sleep(0.5)
 
 def fetch_popular_people_page(page: int):
   """Scarica una pagina di persone popolari da TMDb."""
@@ -222,29 +296,22 @@ def main():
     # piccolo sleep per non stressare TMDb
     time.sleep(0.5)
   
-    # --- DISCOVER (vote_count.desc) ---
-  discover_pages = int(os.environ.get("TMDB_DISCOVER_PAGES", "0"))
 
-  if discover_pages > 0:
-    print(f"Starting TMDb → Supabase ingest for {discover_pages} pages of 'discover (vote_count.desc)'...")
-    for page in range(1, discover_pages + 1):
-      try:
-        data = fetch_tmdb_discover(page)
-      except Exception as e:
-        print(f"Error fetching TMDb discover page {page}: {e}", file=sys.stderr)
-        break
+  # --- DISCOVER (vote_count.desc) PER ANNO ---
+  discover_start_year = int(os.environ.get("TMDB_DISCOVER_START_YEAR", "1950"))
+  discover_end_year = int(os.environ.get("TMDB_DISCOVER_END_YEAR", "2024"))
+  discover_max_pages_per_year = int(
+      os.environ.get("TMDB_DISCOVER_MAX_PAGES_PER_YEAR", "50")
+  )
+  # 50 pagine/anno = 1000 film/anno; su 75 anni ~75k film.
 
-      results = data.get("results") or []
-      movies = [normalize_movie(m) for m in results]
+  if discover_max_pages_per_year > 0:
+      ingest_discover_by_year(
+          discover_start_year,
+          discover_end_year,
+          discover_max_pages_per_year,
+      )
 
-      try:
-        upsert_movies(movies)
-      except Exception as e:
-        print(f"Error upserting discover page {page}: {e}", file=sys.stderr)
-        break
-
-      print(f"Upserted discover page {page}/{discover_pages} ({len(movies)} movies).")
-      time.sleep(0.5)
 
   # --- Ingest persone popolari TMDb ---
   people_pages = int(os.environ.get("TMDB_PEOPLE_PAGES", "50"))

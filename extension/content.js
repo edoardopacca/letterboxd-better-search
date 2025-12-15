@@ -20,6 +20,9 @@ const SUPABASE_ANON_KEY =
 let lbsSearchInput = null;
 let lbsOverlay = null;
 let lbsOverlayList = null;
+let lbsSelectedIndex = -1;
+let lbsCurrentSuggestions = [];
+
 
 // Per gestire il debounce delle richieste TMDb
 let tmdbTimeoutId = null;
@@ -415,6 +418,9 @@ function renderSuggestions(suggestions) {
     hideOverlay();
     return;
   }
+  lbsCurrentSuggestions = suggestions || [];
+  lbsSelectedIndex = -1;
+
 
   // Svuota lista
   lbsOverlayList.innerHTML = '';
@@ -453,6 +459,42 @@ function renderSuggestions(suggestions) {
   });
 
   showOverlay();
+}
+
+function moveSelection(delta) {
+  if (!lbsOverlayList) return;
+  const items = Array.from(lbsOverlayList.querySelectorAll('li'));
+  if (!items.length) return;
+
+  // aggiorna indice (con wrap-around)
+  lbsSelectedIndex += delta;
+  if (lbsSelectedIndex < 0) lbsSelectedIndex = items.length - 1;
+  if (lbsSelectedIndex >= items.length) lbsSelectedIndex = 0;
+
+  items.forEach((el, i) => {
+    if (i === lbsSelectedIndex) {
+      el.classList.add('lbs-selected');
+      el.scrollIntoView({ block: 'nearest' });
+    } else {
+      el.classList.remove('lbs-selected');
+    }
+  });
+}
+
+function activateSelectedSuggestion() {
+  if (!lbsCurrentSuggestions || lbsSelectedIndex < 0) return;
+  const item = lbsCurrentSuggestions[lbsSelectedIndex];
+  if (!item) return;
+
+  const searchQuery =
+    typeof item === 'string'
+      ? item
+      : item.searchQuery || item.label || '';
+
+  if (searchQuery) {
+    goToLetterboxdSearch(searchQuery);
+    hideOverlay();
+  }
 }
 
 
@@ -606,6 +648,12 @@ function attachSearchListener() {
   }
   input._lbsListenerAttached = true;
   lbsSearchInput = input;
+  // Disattiva cronologia/autocomplete del browser su questo input
+  input.setAttribute('autocomplete', 'off');
+  input.setAttribute('autocorrect', 'off');
+  input.setAttribute('autocapitalize', 'off');
+  input.setAttribute('spellcheck', 'false');
+
 
   createOverlay();
   positionOverlay();
@@ -646,6 +694,23 @@ function attachSearchListener() {
   window.addEventListener('scroll', positionOverlay);
 
   // ... gli addEventListener che già hai ...
+  // Gestione frecce e Invio sulla nostra lista
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveSelection(1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveSelection(-1);
+    } else if (event.key === 'Enter') {
+      // Se c'è un elemento selezionato, usiamo quello
+      if (lbsSelectedIndex >= 0) {
+        event.preventDefault();
+        activateSelectedSuggestion();
+      }
+      // altrimenti lasciamo comportamento normale (search di Letterboxd)
+    }
+  });
 
   console.log('[letterboxd-better-search] Search input listener and overlay attached.');
 

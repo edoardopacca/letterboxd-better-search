@@ -29,8 +29,10 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TMDB_PAGES: '500'
-          TMDB_PEOPLE_PAGES: '600'
-          TMDB_DISCOVER_PAGES: '4000'
+          TMDB_PEOPLE_PAGES: '500'
+          TMDB_DISCOVER_START_YEAR: '1950'
+          TMDB_DISCOVER_END_YEAR: '2024'
+          TMDB_DISCOVER_MAX_PAGES_PER_YEAR: '500'  
 
         run: |
           python scripts/tmdb_to_supabase.py
