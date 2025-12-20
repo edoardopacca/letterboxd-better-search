@@ -389,7 +389,7 @@ function scheduleSupabaseFetch(query) {
       const fallback = getDummySuggestions(lastRequestedQuery);
       renderSuggestions(fallback);
     }
-  }, 300); // 300ms = abbastanza reattivo ma non troppo aggressivo
+  }, 100); // 100ms 
 }
 
 
