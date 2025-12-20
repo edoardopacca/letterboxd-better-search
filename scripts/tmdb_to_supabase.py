@@ -68,6 +68,12 @@ def get_italian_title(raw):
             return t.get("data", {}).get("title")
     return None
 
+def should_keep_movie(raw: dict) -> bool:
+    vote_count = raw.get("vote_count") or 0
+    popularity = raw.get("popularity") or 0
+
+    return vote_count >= 10 or popularity > 2
+
 
 def normalize_movie(raw: dict) -> dict:
   """
@@ -147,7 +153,19 @@ def ingest_discover_by_year(start_year: int, end_year: int, max_pages_per_year: 
 
     # Ingest pagina 1
     results = first_page_data.get("results") or []
-    movies = [normalize_movie(m) for m in results]
+
+    kept = []
+    discarded = 0
+
+    for m in results:
+        if should_keep_movie(m):
+            kept.append(normalize_movie(m))
+        else:
+            discarded += 1
+
+    movies = kept
+    print(f"[{year}] Scartati {discarded} film (vote/pop troppo bassi)")
+
     try:
       upsert_movies(movies)
     except Exception as e:
@@ -172,7 +190,19 @@ def ingest_discover_by_year(start_year: int, end_year: int, max_pages_per_year: 
         break
 
       results = data.get("results") or []
-      movies = [normalize_movie(m) for m in results]
+
+      kept = []
+      discarded = 0
+
+      for m in results:
+          if should_keep_movie(m):
+              kept.append(normalize_movie(m))
+          else:
+              discarded += 1
+
+      movies = kept
+      print(f"[{year}] Scartati {discarded} film (vote/pop troppo bassi)")
+
 
       try:
         upsert_movies(movies)
@@ -285,7 +315,19 @@ def main():
       break
 
     results = data.get("results") or []
-    movies = [normalize_movie(m) for m in results]
+
+    kept = []
+    discarded = 0
+
+    for m in results:
+        if should_keep_movie(m):
+            kept.append(normalize_movie(m))
+        else:
+            discarded += 1
+
+    movies = kept
+    print(f"[popular page {page}] Scartati {discarded} film (vote/pop troppo bassi)")
+
     try:
       upsert_movies(movies)
     except Exception as e:
