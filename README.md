@@ -2,7 +2,7 @@
 
 Letterboxd Better Search is a browser extension that improves Letterboxd’s search experience by adding fuzzy, typo-tolerant suggestions ranked by popularity.
 
-It helps you find the right movie even when you mistype — without replacing or breaking Letterboxd’s native search.
+It helps you find the right movie even when you mistype, without replacing or breaking Letterboxd’s native search.
 
 ✨ Features
 
@@ -75,7 +75,7 @@ You must:
 
 ### config.js
 
-The extension expects a `config.js` file (not committed):
+The extension expects a `config.js` file:
 
 ```js
 window.LBS_SUPABASE_URL = 'https://<your-project>.supabase.co';
