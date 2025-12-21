@@ -4,6 +4,8 @@ Letterboxd Better Search is a browser extension that improves Letterboxd’s sea
 
 It helps you find the right movie even when you mistype, without replacing or breaking Letterboxd’s native search.
 
+![Letterboxd-better-search demo](github-image/letterboxd-search.png)
+
 ✨ Features
 
 - 🔍 Fuzzy search (e.g. incepton → Inception)

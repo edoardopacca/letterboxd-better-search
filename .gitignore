@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 backend/.env
 
 **/.DS_Store
+
+.github-image
+.github-image/letterboxd-search.png
