@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		D02395BB2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D02395BA2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D0F317BD2EF83B53007A616E /* toolbar-icon-16.png in Resources */ = {isa = PBXBuildFile; fileRef = D0F317BC2EF83B53007A616E /* toolbar-icon-16.png */; };
+		D0F317BF2EF83B63007A616E /* toolbar-icon-32.png in Resources */ = {isa = PBXBuildFile; fileRef = D0F317BE2EF83B63007A616E /* toolbar-icon-32.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +39,8 @@
 /* Begin PBXFileReference section */
 		D02395A02EF096DD0090EA53 /* LetterboxdBetterSearchSafari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LetterboxdBetterSearchSafari.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D02395BA2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "LetterboxdBetterSearchSafari Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0F317BC2EF83B53007A616E /* toolbar-icon-16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "toolbar-icon-16.png"; path = "LetterboxdBetterSearchSafari Extension/Resources/images/toolbar-icon-16.png"; sourceTree = "<group>"; };
+		D0F317BE2EF83B63007A616E /* toolbar-icon-32.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "toolbar-icon-32.png"; path = "LetterboxdBetterSearchSafari Extension/Resources/images/toolbar-icon-32.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -96,6 +100,8 @@
 		D02395972EF096DD0090EA53 = {
 			isa = PBXGroup;
 			children = (
+				D0F317BE2EF83B63007A616E /* toolbar-icon-32.png */,
+				D0F317BC2EF83B53007A616E /* toolbar-icon-16.png */,
 				D02395A22EF096DD0090EA53 /* LetterboxdBetterSearchSafari */,
 				D02395BE2EF096DE0090EA53 /* LetterboxdBetterSearchSafari Extension */,
 				D02395A12EF096DD0090EA53 /* Products */,
@@ -210,6 +216,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0F317BF2EF83B63007A616E /* toolbar-icon-32.png in Resources */,
+				D0F317BD2EF83B53007A616E /* toolbar-icon-16.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
