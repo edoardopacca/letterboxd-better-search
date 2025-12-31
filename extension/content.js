@@ -23,6 +23,7 @@ let lbsOverlay = null;
 let lbsOverlayList = null;
 let lbsSelectedIndex = -1;
 let lbsCurrentSuggestions = [];
+let lbsActiveFetchController = null;
 
 
 // Per gestire il debounce delle richieste TMDb
@@ -37,6 +38,8 @@ async function searchAllSupabase(query, limit = 10) {
   }
 
   try {
+    if (lbsActiveFetchController) lbsActiveFetchController.abort();
+    lbsActiveFetchController = new AbortController();
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_all`, {
       method: 'POST',
       headers: {
@@ -48,6 +51,7 @@ async function searchAllSupabase(query, limit = 10) {
         q: query,
         limit_count: limit,
       }),
+      signal: lbsActiveFetchController.signal,
     });
 
     if (!response.ok) {
@@ -60,8 +64,8 @@ async function searchAllSupabase(query, limit = 10) {
     console.log('[letterboxd-better-search] Supabase search_all results for', query, data);
     return data;
   } catch (err) {
-    console.error('[letterboxd-better-search] fetch error:', err);
-    return [];
+    if (err?.name === 'AbortError') return []; // normale mentre scrivi
+    console.error('[letterboxd-better-search] fetch error', err);
   }
 }
 
@@ -441,7 +445,7 @@ function attachSearchListener(retryCount = 0) {
     const value = input.value;
     if (value && value.trim() !== '') {
       renderLoadingSuggestion(value);
-      scheduleTmdbFetch(value);
+      scheduleSupabaseFetch(value);
     }
   });
 
