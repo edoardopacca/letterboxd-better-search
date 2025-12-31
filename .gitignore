@@ -144,3 +144,5 @@ backend/.env
 
 **/.DS_Store
 
+*.pem
+*.crx
