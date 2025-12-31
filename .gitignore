@@ -146,3 +146,5 @@ backend/.env
 
 *.pem
 *.crx
+archived/backend_local_fastapi/data.ms/
+*.mdb
