@@ -99,14 +99,6 @@ Workflow:
 .github/workflows/tmdb_ingest.yml 
 ```
 
-## 🧾 Supabase SQL (transparency)
-
-For reproducibility, the SQL used on the Supabase side (RPC functions + indexes) is included here:
-
-- `supabase/search_functions.sql`
-
-This is **not required** to use the extension, but documents the database-side search logic (`search_movies`, `search_people`, `search_all`) and the related Postgres indexes/extensions.
-
 ### tmdb_ingest
 
 Script:
@@ -123,6 +115,14 @@ The ingest:
 - Exposes a `search_all` RPC used by the extension
 
 No manual setup required unless you are modifying the dataset.
+
+## 🧾 Supabase SQL (transparency)
+
+For reproducibility, the SQL used on the Supabase side (RPC functions + indexes) is included here:
+
+- `supabase/search_functions.sql`
+
+This is **not required** to use the extension, but documents the database-side search logic (`search_movies`, `search_people`, `search_all`) and the related Postgres indexes/extensions.
 
 ## 🧪 Development notes
 
