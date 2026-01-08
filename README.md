@@ -1,32 +1,24 @@
 # Letterboxd Better Search
 
-Letterboxd Better Search is a browser extension that improves Letterboxd’s search experience by adding fuzzy, typo-tolerant suggestions ranked by popularity.
+Letterboxd Better Search is a browser extension that improves Letterboxd’s search experience by adding a live suggestion panel that uses a smarter ranking than Letterboxd’s default search.
 
 It helps you find the right movie even when you mistype, without replacing or breaking Letterboxd’s native search.
 
 ![Letterboxd-better-search demo](github-image/letterboxd-search.png)
 
-✨ Features
-
-- 🔍 Fuzzy search (e.g. incepton → Inception)
-- ⭐ Popularity-aware ranking (famous movies first)
-- 🧠 Dynamic ranking based on query length
-- ⌨️ Keyboard navigation (↑ ↓ Enter)
-- 🪄 Clean dropdown UI directly under the search bar
-- 🚫 Disables browser autocomplete only on Letterboxd search
 
 🧩 How it works
 
 1. You type in the Letterboxd search bar
 2. The extension intercepts the input
-3. A Supabase-hosted dataset (ingested nightly from TMDb) is queried via RPC
-4. Results are ranked using:
+3. There is a Supabase-hosted dataset which has currently ~ 140k movies.
+4. The dataset is ingested nightly from TMDb (which Letterboxd publicly mentions as its movie database). 
+5. Results are ranked using:
    - fuzzy matching
-   - vote count / popularity thresholds based on query length
-5. Suggestions appear in a dropdown under the search bar
-6. Selecting a suggestion redirects to the standard Letterboxd search page
-
-➡️ No Letterboxd API, no scraping, no UI replacement
+   - vote count / popularity 
+   - year bonus (more recent, higher score)
+6. Suggestions appear in a dropdown under the search bar
+7. Selecting a suggestion redirects to the standard Letterboxd search page
 
 ## 🚀 Installation (Chrome / Brave / Edge)
 
@@ -38,7 +30,7 @@ Clone this repository:
 git clone https://github.com/edoardopacca/letterboxd-better-search.git
 ```
 
-Open Chrome and go to:
+Open Chrome / Brave / Edge and go to:
 
 ```
 chrome://extensions
@@ -65,29 +57,27 @@ You must:
 - Open it with Xcode
 - Build & enable the extension manually
 
-(Chrome-compatible browsers are recommended for development.)
 
-## 🔐 Configuration & Keys (important)
+## 🔐 Configuration & Keys
 
 ✅ Users do NOT need any API keys
 
 - TMDb is used only server-side (GitHub Actions)
 - Supabase anon key is public-safe and read-only
-- Everything works out of the box
 
 ### config.js
 
-The extension expects a `config.js` file:
+The extension **needs** a `config.js` file:
 
 ```js
 window.LBS_SUPABASE_URL = 'https://<your-project>.supabase.co';
 window.LBS_SUPABASE_ANON_KEY = '<public anon key>';
 
-// Optional — NOT required for users
+// Optional — NOT required 
 window.LBS_TMDB_API_KEY = 'OPTIONAL_DEV_KEY';
 ```
 
-⚠️ Regular users do not need a TMDb key.
+⚠️ Do NOT modify this file, unless you are modifying the dataset and the PostgreSQL queries. In that case you need your Supabase URL and ANON key, and to set your ingestion path. 
 
 ## 🗃 Dataset & Ingestion
 
@@ -112,9 +102,9 @@ The ingest:
 - Fetches movies + people from TMDb
 - Applies filtering (years, pages, popularity)
 - Stores everything in Supabase
-- Exposes a `search_all` RPC used by the extension
 
-No manual setup required unless you are modifying the dataset.
+⚠️ Regular users do not need to modify these files, unless you are modifying the dataset as before. 
+⚠️ These are **not required** for you to use the extension, but document the ingestion. Therefore, nothing happens if you modify or cancel them. 
 
 ## 🧾 Supabase SQL (transparency)
 
@@ -122,7 +112,7 @@ For reproducibility, the SQL used on the Supabase side (RPC functions + indexes)
 
 - `supabase/search_functions.sql`
 
-This is **not required** to use the extension, but documents the database-side search logic (`search_movies`, `search_people`, `search_all`) and the related Postgres indexes/extensions.
+⚠️ This is **not required** to use the extension, but documents the database-side search logic (`search_movies`, `search_people`, `search_all`) and the related Postgres indexes/extensions.
 
 ## 🧪 Development notes
 
@@ -136,12 +126,6 @@ This is **not required** to use the extension, but documents the database-side s
 - Debounce: ~300ms
 - Browser autocomplete is disabled only on Letterboxd search inputs
 
-## 🛣 Roadmap
-
-- Better semantic ranking
-- People vs movies visual distinction
-- Settings toggle
-- Public store release
 
 ## 📄 License
 
