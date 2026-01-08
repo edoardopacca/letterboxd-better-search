@@ -60,10 +60,12 @@ You must:
 
 ## 🔐 Configuration & Keys
 
+
 ✅ Users do NOT need any API keys
 
 - TMDb is used only server-side (GitHub Actions)
 - Supabase anon key is public-safe and read-only
+  
 
 ### config.js
 
@@ -79,6 +81,7 @@ window.LBS_TMDB_API_KEY = 'OPTIONAL_DEV_KEY';
 
 ⚠️ Do NOT modify this file, unless you are modifying the dataset and the PostgreSQL queries. In that case you need your Supabase URL and ANON key, and to set your ingestion path. 
 
+
 ## 🗃 Dataset & Ingestion
 
 The movie/person dataset is ingested nightly from TMDb → Supabase using GitHub Actions.
@@ -88,8 +91,6 @@ Workflow:
 ```
 .github/workflows/tmdb_ingest.yml 
 ```
-
-### tmdb_ingest
 
 Script:
 
@@ -104,6 +105,7 @@ The ingest:
 - Stores everything in Supabase
 
 ⚠️ Regular users do not need to modify these files, unless you are modifying the dataset as before. 
+
 ⚠️ These are **not required** for you to use the extension, but document the ingestion. Therefore, nothing happens if you modify or cancel them. 
 
 ## 🧾 Supabase SQL (transparency)
